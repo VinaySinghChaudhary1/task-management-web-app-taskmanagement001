@@ -1,1 +1,45 @@
-document.addEventListener('DOMContentLoaded', function() { const taskList = document.getElementById('task-list'); const newTaskInput = document.getElementById('new-task-input'); const addTaskButton = document.getElementById('add-task-button'); addTaskButton.addEventListener('click', function() { const taskText = newTaskInput.value.trim(); if (taskText !== '') { const row = document.createElement('tr'); const taskCell = document.createElement('td'); taskCell.textContent = taskText; const actionsCell = document.createElement('td'); const deleteButton = document.createElement('button'); deleteButton.textContent = 'Delete'; deleteButton.className = 'btn btn-danger btn-sm'; deleteButton.addEventListener('click', function() { taskList.removeChild(row); }); actionsCell.appendChild(deleteButton); row.appendChild(taskCell); row.appendChild(actionsCell); taskList.appendChild(row); newTaskInput.value = ''; } }); fetch('sample-tasks.csv').then(response => response.text()).then(data => { const rows = data.split('\n'); const csvData = document.getElementById('csv-data').getElementsByTagName('tbody')[0]; rows.forEach(row => { const cols = row.split(','); const tr = document.createElement('tr'); cols.forEach(col => { const td = document.createElement('td'); td.textContent = col; tr.appendChild(td); }); csvData.appendChild(tr); }); }).catch(error => { console.error('Error loading CSV:', error); }); });
+document.addEventListener('DOMContentLoaded', function() {
+    const markCompleteButton = document.getElementById('mark-complete-button');
+    const deleteTaskButton = document.getElementById('delete-task-button');
+    const taskFilterDropdown = document.getElementById('task-filter-dropdown');
+    const taskListFiltered = document.getElementById('task-list-filtered').querySelector('tbody');
+
+    // Sample tasks data
+    const tasks = [
+        { id: 1, name: 'Task 1', status: 'pending' },
+        { id: 2, name: 'Task 2', status: 'completed' },
+        { id: 3, name: 'Task 3', status: 'pending' }
+    ];
+
+    function renderTasks(filter = 'all') {
+        taskListFiltered.innerHTML = '';
+        const filteredTasks = tasks.filter(task => filter === 'all' || task.status === filter);
+        filteredTasks.forEach(task => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${task.name}</td><td>${task.status}</td>`;
+            taskListFiltered.appendChild(row);
+        });
+    }
+
+    markCompleteButton.addEventListener('click', function() {
+        tasks.forEach(task => {
+            if (task.status === 'pending') {
+                task.status = 'completed';
+            }
+        });
+        renderTasks(taskFilterDropdown.value);
+    });
+
+    deleteTaskButton.addEventListener('click', function() {
+        const remainingTasks = tasks.filter(task => task.status !== 'completed');
+        tasks.length = 0;
+        tasks.push(...remainingTasks);
+        renderTasks(taskFilterDropdown.value);
+    });
+
+    taskFilterDropdown.addEventListener('change', function() {
+        renderTasks(this.value);
+    });
+
+    renderTasks();
+});
